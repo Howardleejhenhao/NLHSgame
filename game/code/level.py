@@ -1,16 +1,23 @@
+from numpy import floor_divide
 from support import import_csv_layout, import_cut_graphics
 import pygame
 from settings import tile_size
 from tile import Tile, StaticTile, Crate, Coin, Palm
-from enemy import Enemy
+#from enemy import Enemy
 
 class Level:
     def __init__(self, level_data, surface):
         # general setup
         self.display_surface = surface
-        self.world_shift = 0
-        
-        # terrain setup
+        self.world_shift = 2
+
+        # first
+        print("start to import csv")
+        floor_layout = import_csv_layout(level_data['floor'])
+        self.floor_sprites = self.create_tile_group(floor_layout, 'floor')
+        print("correct import")
+
+        """# terrain setup
         terrain_layout = import_csv_layout(level_data['terrain'])
         self.terrain_sprites = self.create_tile_group(terrain_layout, 'terrain')
 
@@ -40,7 +47,7 @@ class Level:
 
         # constraint
         constraint_layout = import_csv_layout(level_data['constraints'])
-        self.constraint_sprite = self.create_tile_group(constraint_layout, 'constraint')
+        self.constraint_sprite = self.create_tile_group(constraint_layout, 'constraint')"""
 
 
     def create_tile_group(self, layout, type):
@@ -52,12 +59,18 @@ class Level:
                     x = col_index * tile_size
                     y = row_index * tile_size
                     print("start to import picture")
+                    if type == 'floor':
+                        floor_tile_list = import_cut_graphics('../picture/test10.png')
+                        tile_surface = floor_tile_list[int(val)]
+                        sprite = StaticTile(tile_size, x, y, tile_surface)
+                    print("correct to import picture")
+
+                    """
                     if type == 'terrain':
                         terrain_tile_list = import_cut_graphics('../graphics/terrain/terrain_tiles.png')
                         tile_surface = terrain_tile_list[int(val)]
                         sprite = StaticTile(tile_size, x, y, tile_surface)
-                    print("correct to import picture")    
-                    print("correct to import picture")    
+
                     if type == 'grass':
                         grass_tile_list = import_cut_graphics('../graphics/decoration/grass/grass.png')
                         tile_surface = grass_tile_list[int(val)]
@@ -84,7 +97,7 @@ class Level:
 
                     if type == 'constraint':
                         sprite = Tile(tile_size, x, y)
-                        
+                        """
 
                     sprite_group.add(sprite)
 
@@ -96,6 +109,7 @@ class Level:
                 enemy.reverse()
 
     def run(self):
+        """
         # run the entire game / level
         # background palms
         self.bg_plam_sprites.update(self.world_shift)
@@ -127,5 +141,9 @@ class Level:
 
         # forground palms
         self.fg_plam_sprites.update(self.world_shift)
-        self.fg_plam_sprites.draw(self.display_surface)
+        self.fg_plam_sprites.draw(self.display_surface)"""
+
+        #floor
+        self.floor_sprites.update(self.world_shift)
+        self.floor_sprites.draw(self.display_surface)
 
