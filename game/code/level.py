@@ -60,7 +60,7 @@ class Level:
                     y = row_index * tile_size
                     print("start to import picture")
                     if type == 'floor':
-                        floor_tile_list = import_cut_graphics('../picture/test10.png')
+                        floor_tile_list = import_cut_graphics('../picture/floortest.png')
                         tile_surface = floor_tile_list[int(val)]
                         sprite = StaticTile(tile_size, x, y, tile_surface)
                     print("correct to import picture")
