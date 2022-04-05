@@ -1,3 +1,3 @@
 level_0 = {
-		'floor': '../graphics/flooor_side.csv'
+		'floor': '../graphics/floor_test_floor.csv'
         }

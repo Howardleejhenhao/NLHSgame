@@ -9,7 +9,7 @@ class Level:
     def __init__(self, level_data, surface):
         # general setup
         self.display_surface = surface
-        self.world_shift = 2
+        self.world_shift = 1
 
         # first
         print("start to import csv")
@@ -60,7 +60,7 @@ class Level:
                     y = row_index * tile_size
                     print("start to import picture")
                     if type == 'floor':
-                        floor_tile_list = import_cut_graphics('../picture/floortest.png')
+                        floor_tile_list = import_cut_graphics('../picture/floor_test1.png')
                         tile_surface = floor_tile_list[int(val)]
                         sprite = StaticTile(tile_size, x, y, tile_surface)
                     print("correct to import picture")
