@@ -1,14 +1,21 @@
 from support import import_csv_layout, import_cut_graphics
 import pygame
-from settings import tile_size
+from settings import tile_size, screen_height
 from tile import Tile, StaticTile, Crate, Coin, Palm
 from enemy import Enemy
+from decoration import sky, water
 
 class Level:
     def __init__(self, level_data, surface):
         # general setup
         self.display_surface = surface
-        self.world_shift = 0
+        self.world_shift = -6
+
+        # player
+        player_layout = import_csv_layout(level_data['player'])
+        self.player = pygame.sprite.GroupSingle()
+        self.goal = pygame.sprite.GroupSingle()
+        self.player_setup(player_layout)
         
         # terrain setup
         terrain_layout = import_csv_layout(level_data['terrain'])
@@ -42,6 +49,11 @@ class Level:
         constraint_layout = import_csv_layout(level_data['constraints'])
         self.constraint_sprite = self.create_tile_group(constraint_layout, 'constraint')
 
+        # decoration
+        self.sky = sky(8)
+        level_width = len(terrain_layout[0])
+        self.water = water(screen_height - 40, level_width)
+
 
     def create_tile_group(self, layout, type):
         sprite_group = pygame.sprite.Group()
@@ -51,13 +63,10 @@ class Level:
                 if val != '-1':
                     x = col_index * tile_size
                     y = row_index * tile_size
-                    print("start to import picture")
                     if type == 'terrain':
                         terrain_tile_list = import_cut_graphics('../graphics/terrain/terrain_tiles.png')
                         tile_surface = terrain_tile_list[int(val)]
-                        sprite = StaticTile(tile_size, x, y, tile_surface)
-                    print("correct to import picture")    
-                    print("correct to import picture")    
+                        sprite = StaticTile(tile_size, x, y, tile_surface)    
                     if type == 'grass':
                         grass_tile_list = import_cut_graphics('../graphics/decoration/grass/grass.png')
                         tile_surface = grass_tile_list[int(val)]
@@ -90,6 +99,21 @@ class Level:
 
         return sprite_group            
 
+
+    def player_setup(self, layout):
+        for row_index, row in enumerate(layout):
+            for col_index, val in enumerate(row):
+                x = col_index * tile_size
+                y = row_index * tile_size
+                if val != '0':
+                    print('player goes here')
+                if val == '1':
+                    hat_surface = pygame.image.load('../graphics/character/hat.png').convert_alpha()
+                    sprite = StaticTile(tile_size, x, y, hat_surface)
+                    self.goal.add(sprite)
+
+                
+
     def enemy_collision_reverse(self):
         for enemy in self.enemy_sprites.sprites():
             if pygame.sprite.spritecollide(enemy, self.constraint_sprite, False):
@@ -97,6 +121,11 @@ class Level:
 
     def run(self):
         # run the entire game / level
+
+
+        # decoration
+        self.sky.draw(self.display_surface)
+
         # background palms
         self.bg_plam_sprites.update(self.world_shift)
         self.bg_plam_sprites.draw(self.display_surface)
@@ -129,3 +158,11 @@ class Level:
         self.fg_plam_sprites.update(self.world_shift)
         self.fg_plam_sprites.draw(self.display_surface)
 
+
+        #player sprite
+        self.goal.update(self.world_shift)
+        self.goal.draw(self.display_surface)
+
+
+        # water
+        self.water.draw(self.display_surface, self.world_shift)
