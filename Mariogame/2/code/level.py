@@ -3,7 +3,7 @@ import pygame
 from settings import tile_size, screen_height
 from tile import Tile, StaticTile, Crate, Coin, Palm
 from enemy import Enemy
-from decoration import sky, water
+from decoration import sky, water, clouds
 
 class Level:
     def __init__(self, level_data, surface):
@@ -52,7 +52,8 @@ class Level:
         # decoration
         self.sky = sky(8)
         level_width = len(terrain_layout[0])
-        self.water = water(screen_height - 40, level_width)
+        self.water = water(screen_height - 20, level_width)
+        self.clouds = clouds(400, level_width, 20)
 
 
     def create_tile_group(self, layout, type):
@@ -123,8 +124,9 @@ class Level:
         # run the entire game / level
 
 
-        # decoration
+        # sky
         self.sky.draw(self.display_surface)
+        self.clouds.draw(self.display_surface, self.world_shift)
 
         # background palms
         self.bg_plam_sprites.update(self.world_shift)

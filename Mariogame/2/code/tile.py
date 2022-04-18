@@ -1,4 +1,3 @@
-from flask import copy_current_request_context
 import pygame
 from support import import_folder
 
