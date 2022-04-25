@@ -4,12 +4,14 @@ from settings import tile_size, screen_height
 from tile import Tile, StaticTile, Crate, Coin, Palm
 from enemy import Enemy
 from decoration import sky, water, clouds
+from player import Player
+from particle import ParticleEffect
 
 class Level:
     def __init__(self, level_data, surface):
         # general setup
         self.display_surface = surface
-        self.world_shift = -6
+        self.world_shift = 0
 
         # player
         player_layout = import_csv_layout(level_data['player'])
@@ -17,10 +19,15 @@ class Level:
         self.goal = pygame.sprite.GroupSingle()
         self.player_setup(player_layout)
         
+        # dust
+        self.dust_sprite = pygame.sprite.GroupSingle()
+        self.player_on_ground = False
+        
         # terrain setup
         terrain_layout = import_csv_layout(level_data['terrain'])
         self.terrain_sprites = self.create_tile_group(terrain_layout, 'terrain')
-
+        
+        
         # grass setup
         grass_layout = import_csv_layout(level_data['grass'])
         self.grass_sprites = self.create_tile_group(grass_layout, 'grass')
@@ -51,10 +58,9 @@ class Level:
 
         # decoration
         self.sky = sky(8)
-        level_width = len(terrain_layout[0])
+        level_width = len(terrain_layout[0]) * tile_size
         self.water = water(screen_height - 20, level_width)
         self.clouds = clouds(400, level_width, 20)
-
 
     def create_tile_group(self, layout, type):
         sprite_group = pygame.sprite.Group()
@@ -106,19 +112,65 @@ class Level:
             for col_index, val in enumerate(row):
                 x = col_index * tile_size
                 y = row_index * tile_size
-                if val != '0':
-                    print('player goes here')
+                if val == '0':
+                    sprite = Player((x, y), self.display_surface, self.create_jump_particles)
+                    self.player.add(sprite)
                 if val == '1':
                     hat_surface = pygame.image.load('../graphics/character/hat.png').convert_alpha()
                     sprite = StaticTile(tile_size, x, y, hat_surface)
-                    self.goal.add(sprite)
-
-                
+                    self.goal.add(sprite)               
 
     def enemy_collision_reverse(self):
         for enemy in self.enemy_sprites.sprites():
             if pygame.sprite.spritecollide(enemy, self.constraint_sprite, False):
                 enemy.reverse()
+
+    def create_jump_particles(self, pos):
+        if self.player.sprite.facing_right:
+            pos -= pygame.math.Vector2(10, 5) # 讓灰塵跑步的時候更好看
+        else:
+            pos += pygame.math.Vector2(10, 5) # 讓灰塵跑步的時候更好看
+        jump_particle_sprite = ParticleEffect(pos, 'jump')
+        self.dust_sprite.add(jump_particle_sprite)
+
+    def horizontal_movement_collision(self):
+        player = self.player.sprite
+        player.rect.x += player.direction.x * player.speed
+
+        collidable_sprites = self.terrain_sprites.sprites() + self.crate_sprites.sprites() + self.fg_plam_sprites.sprites()
+        for sprite in collidable_sprites: # 處理貼牆壁的問題
+            if sprite.rect.colliderect(player.rect):
+                if player.direction.x < 0: # 右或左
+                    player.rect.left = sprite.rect.right
+                    player.on_left = True
+                    self.current_x = player.rect.left
+                elif player.direction.x > 0:
+                    player.rect.right = sprite.rect.left
+                    player.on_right = True
+                    self.current_x = player.rect.right
+        if player.on_left and (player.rect.left < self.current_x or player.direction.x >= 0):
+            player.on_left = False
+        if player.on_right and (player.rect.right < self.current_x or player.direction.x <= 0):
+            player.on_right = False
+
+    def vertical_movement_collision(self):
+        player = self.player.sprite
+        player.apply_gravity()
+        collidable_sprites = self.terrain_sprites.sprites() + self.crate_sprites.sprites() + self.fg_plam_sprites.sprites()
+        for sprite in collidable_sprites: # 處理貼牆壁的問題
+            if sprite.rect.colliderect(player.rect):
+                if player.direction.y > 0: # 上下
+                    player.rect.bottom = sprite.rect.top
+                    player.direction.y = 0
+                    player.on_ground = True
+                elif player.direction.y < 0:
+                    player.rect.top = sprite.rect.bottom
+                    player.direction.y = 0
+                    player.on_ceiling = True
+        if player.on_ground and player.direction.y < 0 or player.direction.y > 1:
+            player.on_ground = False
+        if player.on_ceiling and player.direction.y > 0:
+            player.on_ceiling = False
 
     def run(self):
         # run the entire game / level
@@ -162,9 +214,12 @@ class Level:
 
 
         #player sprite
+        self.player.update()
+        self.horizontal_movement_collision()
+        self.vertical_movement_collision()
+        self.player.draw(self.display_surface)
         self.goal.update(self.world_shift)
         self.goal.draw(self.display_surface)
-
 
         # water
         self.water.draw(self.display_surface, self.world_shift)

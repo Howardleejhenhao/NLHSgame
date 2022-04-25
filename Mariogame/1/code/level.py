@@ -1,4 +1,3 @@
-import turtle
 import pygame
 from particle import ParticleEffect
 from tiles import Tile

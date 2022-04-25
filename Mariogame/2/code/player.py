@@ -1,3 +1,4 @@
+from matplotlib import animation
 import pygame
 from support import import_folder
 
@@ -122,6 +123,7 @@ class Player(pygame.sprite.Sprite):
         self.direction.y = self.jump_speed
 
     def update(self):
+        
         self.get_input()
         self.get_status()
         self.animate()
