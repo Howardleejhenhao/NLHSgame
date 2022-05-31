@@ -1,6 +1,6 @@
 from support import import_csv_layout, import_cut_graphics
 import pygame
-from settings import tile_size, screen_height
+from settings import tile_size, screen_height, screen_width
 from tile import Tile, StaticTile, Crate, Coin, Palm
 from enemy import Enemy
 from decoration import sky, water, clouds
@@ -12,6 +12,7 @@ class Level:
         # general setup
         self.display_surface = surface
         self.world_shift = 0
+        self.current_x = None
 
         # player
         player_layout = import_csv_layout(level_data['player'])
@@ -43,6 +44,10 @@ class Level:
         # foreground palms
         fg_plam_layout = import_csv_layout(level_data['fg palms'])
         self.fg_plam_sprites = self.create_tile_group(fg_plam_layout, 'fg palms')
+
+        # dust particles
+        self.dust_sprite.update(self.world_shift)
+        self.dust_sprite.draw(self.display_surface)
 
         # background palms
         bg_plam_layout = import_csv_layout(level_data['bg palms'])
@@ -172,6 +177,36 @@ class Level:
         if player.on_ceiling and player.direction.y > 0:
             player.on_ceiling = False
 
+    def scroll_x(self): # 處理會超出視窗
+            player = self.player.sprite
+            player_x = player.rect.centerx
+            direction_x = player.direction.x
+
+            if player_x < screen_width / 4 and direction_x < 0: #要讓他可以回來
+                self.world_shift = 8
+                player.speed = 0
+            elif player_x > screen_width - (screen_width / 4) and direction_x > 0:
+                self.world_shift = -8
+                player.speed = 0
+            else:
+                self.world_shift = 0
+                player.speed = 8
+
+    def get_player_on_ground(self): # 在不再地板上
+        if self.player.sprite.on_ground:
+            self.player_on_ground = True
+        else:
+            self.player_on_ground = False
+
+    def create_landing_dust(self): # 烙下的灰塵
+        if not self.player_on_ground and self.player.sprite.on_ground and not self.dust_sprite.sprites(): # 裡面沒東西
+            if self.player.sprite.facing_right:
+                offset = pygame.math.Vector2(10, 15)
+            else:
+                offset = pygame.math.Vector2(-10, 15)
+            fall_dust_particle = ParticleEffect(self.player.sprite.rect.midbottom - offset, 'land')
+            self.dust_sprite.add(fall_dust_particle)
+
     def run(self):
         # run the entire game / level
 
@@ -216,7 +251,12 @@ class Level:
         #player sprite
         self.player.update()
         self.horizontal_movement_collision()
+
+        self.get_player_on_ground()
         self.vertical_movement_collision()
+        self.create_landing_dust()
+
+        self.scroll_x()
         self.player.draw(self.display_surface)
         self.goal.update(self.world_shift)
         self.goal.draw(self.display_surface)
