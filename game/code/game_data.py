@@ -1,3 +1,4 @@
 level_0 = {
-		'floor': '../graphics/floor_test_floor.csv'
+		'floor': '../level/Background/0_floooor.csv',
+        'player': '../level/player/start.csv'
         }
